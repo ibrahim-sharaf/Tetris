@@ -102,7 +102,7 @@ const tShape_template = [tShape, temp = tShape.rotateArray(),
                        temp.rotateArray()]
 
 
-
+// Game pieces
 var pieces = { sShape : sShape_template,
                zShape : zShape_template,
                iShape : iShape_template,
