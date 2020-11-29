@@ -11,7 +11,7 @@ Array.prototype.deepCopy = function (){
 }
 
 
-// rotate 2d x * x array without damaging the original one.
+// Rotate 2d (x * x) array without damaging the original one.
 Array.prototype.rotateArray = function () {
 	var arr    = this.deepCopy();
 	var length = this.length - 1;
@@ -35,7 +35,14 @@ const leftMargin = Math.floor(canvWidth - (boardWidth * boxSize))/2;
 const topMargin  =  canvHeight - (boardHeight * boxSize) - 10;
 
 const boarderColor = "#660000";
-const boardColor   = "black"; 
+const boardColor   = "black";
+
+const freq = 50;
+
+const downMovFreq   = 0.3;
+const sideMovFreq   = 0.1;
+const roundMoveFreq = 0.3;
+
 
 // Primary Shapes.
 var zShape = [[" "," "," "," "," "],
@@ -116,18 +123,29 @@ const templateHieght = 5;
 
 var random = Math.random;
 
-var fallingSpead = 200;
+var lastDownMove;
+var lastSideMove;
+var lastroundMove;
+
 /*****************************************************************/
     
 	function startGame() {
+
 		myGameArea.start()
-		level = 1;
-	    piece = getNewPiece();
-	    gameOver = false;
+
+	    gameOver    = false;
 	    didNotStart = true;
+
+		level 	= 1;
+		score   = 0;
+
+		piece     = getNewPiece();
 		nextPiece = getNewPiece();
-		score  = 0;
-		board = getEmptyBoard();
+		board     = getEmptyBoard();
+
+		lastDownMove  = Date.now();
+		lastSideMove  = Date.now();
+		lastroundMove = Date.now();
 	}
 
 	var myGameArea = {
@@ -137,7 +155,7 @@ var fallingSpead = 200;
 			this.canvas.height = canvHeight;
 			this.context = this.canvas.getContext("2d");
 			document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-			this.interval = setInterval(updateGameArea, fallingSpead);
+			this.interval = setInterval(updateGameArea, freq);
 			window.addEventListener('keydown', function(e){
 				myGameArea.key = e.keyCode;
 			})
@@ -151,21 +169,23 @@ var fallingSpead = 200;
 	}
 
 // main loop
-	function updateGameArea(){
+	function updateGameArea() {
+
 		myGameArea.clear();
 
 		if (gameOver){
 			drawGameOver();
-			if (myGameArea.key){
-				nextPiece = getNewPiece()
-				piece = getNewPiece()
-				board = getEmptyBoard()
+			if (myGameArea.key == 13) {
+				nextPiece = getNewPiece();
+				piece 	  = getNewPiece();
+				board 	  = getEmptyBoard();
+
 				gameOver = false;
 			}
 
-		} else if (didNotStart){
+		} else if (didNotStart) {
 			drawStart();
-			if (myGameArea.key){
+			if (myGameArea.key == 13){
 				date = Date.now();
 				didNotStart = false;
 			}
@@ -177,56 +197,66 @@ var fallingSpead = 200;
 
 
 	function gameLoop() {
-		if (piece == null){
-			piece = nextPiece;
-			nextPiece = getNewPiece();
-		}
 		
 		drawBoard(board);
 		drawPieace(piece);
 		drawNextPiece(nextPiece);
 		drawStatistics();
-		if (!isVaildPos(board,piece)){
+
+		if (!isVaildPos(board,piece)) {
 			gameOver = true;
 		}
 
 		if (!isVaildPos(board,piece,0,1)){
 			addToBoard(piece);
-			piece = null;
-			score += getScores(board)
+			piece     = nextPiece;
+			nextPiece = getNewPiece();
+			score    += getScores(board)
 		};
+
 		listenToKeys();
 
-		piece.y++;
+		if((Date.now() - lastDownMove)/1000 > downMovFreq) {
+			piece.y++;
+			lastDownMove = Date.now();
+		}
+		
 	}
 
 	function calculateSpead(){
 		level += ~~(score/10);
-		if(fallingSpead >= 40){
-			fallingSpead -=  10;
-		} 
 	}
 
 	function listenToKeys(){
-			if (myGameArea.key && myGameArea.key == 37 && isVaildPos(board, piece, -1,0)){
+			if (myGameArea.key && myGameArea.key == 37 && isVaildPos(board, piece, -1,0) && (Date.now() - lastSideMove)/1000 > sideMovFreq){
 					piece.x-- 
-			} else if (myGameArea.key && myGameArea.key == 39 && isVaildPos(board, piece, 1,0)){
+					lastSideMove = Date.now();
+			} else if (myGameArea.key && myGameArea.key == 39 && isVaildPos(board, piece, 1,0)  && (Date.now() - lastSideMove)/1000 > sideMovFreq){
 		    	piece.x++ ;
-		    } else if (myGameArea.key && myGameArea.key == 38) {
+		    	lastSideMove = Date.now();
+		    } else if (myGameArea.key && myGameArea.key == 38 && (Date.now() - lastroundMove)/1000 > roundMoveFreq) {
 		    	piece.rotation = (piece.rotation + 1) % pieces[piece.shape].length
+		    	lastroundMove = Date.now();
 		    	if(!isVaildPos(board,piece)){
 		    		piece.rotation = (piece.rotation - 1) % pieces[piece.shape].length
 		 
 		    	}
 
-		    } else if (myGameArea.key && myGameArea.key == 40){
-		    	for (var i = 0; i < boardHeight; i++) {
+		    } else if(myGameArea.key && myGameArea.key == 40 && isVaildPos(board, piece, 0,1)) {
+		    	piece.y++;
+		    	lastDownMove = Date.now();
+		    }
+
+		     else if (myGameArea.key && myGameArea.key == 32){
+		    	for (var i = 1; i < boardHeight; i++) {
 		    		if (!isVaildPos(board,piece,0,i)){
 		    			break;
 		    		}; piece.y += i - 1;
 		    	}
 		    }
-		} 
+		}
+
+
 	function isCompleteLine(board, y){
 		for (var x = 0; x < boardWidth; x++) {
 			if(board[x][y] === empty){
@@ -263,7 +293,7 @@ var fallingSpead = 200;
 		for (var x = 0; x < templateWidth; x++) {
 			for (var y = 0; y < templateHieght; y++) {
 				if(pieces[piece.shape][piece.rotation][y][x] !== empty){
-					board[x + piece.x][y + piece.y] = piece.color;
+					board[x + piece.x][y + piece.y] = 1 /*piece.color*/;
 				}	
 			};
 		};
@@ -276,7 +306,8 @@ var fallingSpead = 200;
 	}
 
 	function isVaildPos(board, piece, newX,newY){
-		if(!newX && !newY){newX = 0; newY = 0}
+		if(!newX){newX = 0};
+		if(!newY){newY = 0};
 		for (var x = 0; x < templateWidth; x++) {
 			for (var y = 0; y < templateHieght; y++) {
 				isAboveBoard = (y + piece.y + newY) < 0;
@@ -304,12 +335,12 @@ var fallingSpead = 200;
 
     function drawGameOver() {
 		drawText("Game Over",canvWidth/5 >> 0 , canvHeight/3 >> 0,"100px Arial", "white");
-		drawText("Press any key to play again",canvWidth/3 >> 0 , canvHeight/2 >> 0,"30px gorgia", "white");
+		drawText("Press Enter to play again",canvWidth/3 >> 0 , canvHeight/2 >> 0,"30px gorgia", "white");
 	}
 
 	function drawStart(){
 		drawText("Tetris",canvWidth/3 >> 0 , canvHeight/3 >> 0,"100px Arial", "white");
-		drawText("Press any key to start",canvWidth/3 >> 0 , canvHeight/2 >> 0,"30px gorgia", "white");
+		drawText("Press Enter to start",canvWidth/3 >> 0 , canvHeight/2 >> 0,"30px gorgia", "white");
 	}
 
 	function drawStatistics(){
@@ -375,6 +406,7 @@ function getNewPiece() {
 
 function drawPieace(piece, pixelx, pixely){
 	shapeToDraw = pieces[piece.shape][piece.rotation];
+	console.log(shapeToDraw);
 
 	if (!pixelx && !pixely){
 		pixelx = leftMargin + (piece.x * boxSize);
@@ -382,6 +414,7 @@ function drawPieace(piece, pixelx, pixely){
 	}
 	for (var i = 0; i < templateWidth; i++) {
 		for (var j = 0; j < templateHieght; j++) {
+			// Bug here : Cannot read property '0' of undefined
 			if (shapeToDraw[j][i] !== empty){
 				drawBox(null,null,piece.color,pixelx + (i * boxSize) ,pixely + (j * boxSize))
 			}
