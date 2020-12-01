@@ -37,7 +37,7 @@ const topMargin  =  canvHeight - (boardHeight * boxSize) - 10;
 const boarderColor = "#660000";
 const boardColor   = "black";
 
-const freq = 50;
+const freq = 25;
 
 const downMovFreq   = 0.3;
 const sideMovFreq   = 0.1;
@@ -76,8 +76,8 @@ var tShape = [[" "," "," "," "," "],
               [" "," "," "," "," "]];
 
 
-var colors      =   ['#dd0000','#00dd00','#0000dd','#dddd00']
-var colorInside =   ['#ff1100', '#11ff00','#0011ff','#ffff11']
+var colors      =   ['#dd0000', '#00dd00','#0000dd','#dddd00'];
+var colorInside =   ['#ee0000','#00ee00','#0000ee','#eeee00']
 
 /* Secondery Shapes: insteed of writting "sShape" and "Lshape" by hands, I am
 going to reverse "zShape" and "jShape" to create them. */
