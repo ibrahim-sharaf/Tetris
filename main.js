@@ -406,7 +406,6 @@ function getNewPiece() {
 
 function drawPieace(piece, pixelx, pixely){
 	shapeToDraw = pieces[piece.shape][piece.rotation];
-	console.log(shapeToDraw);
 
 	if (!pixelx && !pixely){
 		pixelx = leftMargin + (piece.x * boxSize);
@@ -434,3 +433,5 @@ function getRandomKey(obj){
 function getRandomIndex(arr){
 	return arr.length * random() << 0;
 }
+
+document.body.addEventListener("lood", startGame());
